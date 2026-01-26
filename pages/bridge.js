@@ -1,3 +1,4 @@
+// pages/bridge.js
 import { useEffect } from 'react';
 
 export default function BridgePage() {
@@ -5,6 +6,8 @@ export default function BridgePage() {
     const params = new URLSearchParams(window.location.search);
     const locationId = params.get("location_id");
     const slug = (params.get("landing_page") || "").toLowerCase().trim();
+
+    if (!locationId || !slug) return;
 
     let url = "https://www.anytimefitness.com";
 
@@ -14,7 +17,7 @@ export default function BridgePage() {
       url = `https://www.anytimefitness.com/membership-inquiry?location_id=${locationId}`;
     } else if (slug === "club-home") {
       url = `https://www.anytimefitness.com/locations/commerce-texas-${locationId}`;
-    } else if (slug && locationId) {
+    } else {
       url = `https://www.anytimefitness.com/offer/local/${slug}?club=${locationId}`;
     }
 
@@ -36,7 +39,7 @@ export default function BridgePage() {
       textAlign: 'center',
       padding: '0 20px'
     }}>
-      <p>👟 Hang tight — loading your exclusive Anytime Fitness offer…</p>
+      <p>👟 Hang tight — loading your Anytime Fitness offer…</p>
     </div>
   );
 }
