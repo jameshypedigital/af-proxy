@@ -26,7 +26,7 @@ export default function BridgePage() {
   return (
     <div style={{
       height: '100vh',
-      backgroundColor: '#440099', // Purple brand color
+      backgroundColor: '#4B2AAD',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -40,3 +40,4 @@ export default function BridgePage() {
     </div>
   );
 }
+
