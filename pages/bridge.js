@@ -41,7 +41,7 @@ export default function BridgePage() {
       textAlign: 'center',
       padding: '0 20px'
     }}>
-      <p>👟 💪Flexing our muscles.... Hang tight!</p>
+      <p>👟 💪Hang tight!  Real results ahead!</p>
     </div>
   );
 }
