@@ -1,7 +1,3 @@
 node_modules
 .next
 out
-
-
-
-Add .gitignore for Next.js project
