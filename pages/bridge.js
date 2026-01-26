@@ -7,7 +7,9 @@ export default function BridgePage() {
     const locationId = params.get("location_id");
     const slug = (params.get("landing_page") || "").toLowerCase().trim();
 
-    if (!locationId || !slug) return;
+    if (!slug || !locationId) {
+      return;
+    }
 
     let url = "https://www.anytimefitness.com";
 
@@ -39,8 +41,9 @@ export default function BridgePage() {
       textAlign: 'center',
       padding: '0 20px'
     }}>
-      <p>👟 Hang tight — loading your Anytime Fitness offer…</p>
+      <p>👟 Hang tight — loading your exclusive Anytime Fitness offer…</p>
     </div>
   );
 }
+
 
