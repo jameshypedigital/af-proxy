@@ -13,5 +13,3 @@ export default function Home() {
     </div>
   );
 }
-<p>🚀 Redirect Proxy is now live and ready.</p>
-
