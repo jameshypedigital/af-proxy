@@ -1,8 +1,27 @@
 export default async function handler(req, res) {
   try {
-    const { offer, club, landing_page, location_id, ...utm } = req.query;
+    const { lpurl, offer, club, landing_page, location_id, ...utm } = req.query;
 
-    // Determine club ID — prefer explicit club param, fallback to location_id
+    // ✅ Google Ads Mode: use lpurl directly if present
+    if (lpurl) {
+      await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lpurl,
+          offer,
+          club,
+          location_id,
+          utm,
+          source: "google",
+          timestamp: Date.now()
+        })
+      });
+
+      return res.redirect(302, lpurl);
+    }
+
+    // ✅ Facebook/default mode
     const clubId = club || location_id;
 
     if (!landing_page || !clubId) {
@@ -14,7 +33,6 @@ export default async function handler(req, res) {
 
     const slug = landing_page.trim().toLowerCase();
 
-    // Send data to n8n
     await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -23,23 +41,18 @@ export default async function handler(req, res) {
         club: clubId,
         slug,
         utm,
+        source: "facebook-or-other",
         timestamp: Date.now()
       })
     });
 
-    // Build final URL dynamically
     let finalUrl = null;
 
     if (slug === "online-signup") {
-      // Online Signup format
       finalUrl = `https://join.anytimefitness.com/${clubId}/plans`;
-    }
-    else if (slug === "no-offer") {
-      // No Offer format
+    } else if (slug === "no-offer") {
       finalUrl = `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
-    }
-    else {
-      // Standard offer format
+    } else {
       finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
     }
 
