@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   try {
     const { lpurl, offer, club, landing_page, location_id, ...utm } = req.query;
 
-    // ✅ Google Ads Mode: use lpurl directly if present
+    // ✅ Google Ads mode – if lpurl is present, use it directly
     if (lpurl) {
       await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-track", {
         method: "POST",
@@ -23,7 +23,6 @@ export default async function handler(req, res) {
 
     // ✅ Facebook/default mode
     const clubId = club || location_id;
-
     if (!landing_page || !clubId) {
       return res.status(400).json({
         ok: false,
@@ -48,10 +47,13 @@ export default async function handler(req, res) {
 
     let finalUrl = null;
 
+    // 🧠 Add support for the general club location page
     if (slug === "online-signup") {
       finalUrl = `https://join.anytimefitness.com/${clubId}/plans`;
     } else if (slug === "no-offer") {
       finalUrl = `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
+    } else if (slug === "club-home") {
+      finalUrl = `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
     } else {
       finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
     }
@@ -62,3 +64,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ ok: false, error: err.message });
   }
 }
+
