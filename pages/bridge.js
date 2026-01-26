@@ -31,17 +31,17 @@ export default function BridgePage() {
   return (
     <div style={{
       height: '100vh',
-      backgroundColor: '#4B2AAD',
+      backgroundColor: '#440099',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       color: 'white',
       fontFamily: 'Helvetica, sans-serif',
-      fontSize: '1.5rem',
+      fontSize: '2.0rem',
       textAlign: 'center',
       padding: '0 20px'
     }}>
-      <p>👟 Hang tight — loading your exclusive Anytime Fitness offer…</p>
+      <p>👟 💪Flexing our muscles.... Hang tight!</p>
     </div>
   );
 }
