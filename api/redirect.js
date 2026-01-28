@@ -47,8 +47,12 @@ export default async function handler(req, res) {
 
     let finalUrl = null;
 
-// 🧠 Add support for the general club location page
-if (slug === "online-signup") {
+// 📰 BLOG ARTICLES — MUST COME FIRST
+if (slug.startsWith("blog/")) {
+  finalUrl = `https://www.anytimefitness.com/${slug}`;
+
+// 🧠 General club pages
+} else if (slug === "online-signup") {
   finalUrl = `https://join.anytimefitness.com/${clubId}/plans`;
 
 } else if (slug === "no-offer") {
@@ -57,15 +61,11 @@ if (slug === "online-signup") {
 } else if (slug === "club-home") {
   finalUrl = `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
 
-} 
-// 📰 Blog article support
-else if (slug.startsWith("blog/")) {
-  finalUrl = `https://www.anytimefitness.com/${slug}`;
-} 
-// 🎯 Default local offer
-else {
+// 🎯 DEFAULT LOCAL OFFER — LAST
+} else {
   finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
 }
+
 
     return res.redirect(302, finalUrl);
 
