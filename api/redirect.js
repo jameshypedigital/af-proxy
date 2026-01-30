@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   try {
-    const { lpurl, offer, club, landing_page, club_id, ...utm } = req.query;
+    const { lpurl, offer, club, landing_page, location_id, ...utm } = req.query;
 
     // ✅ Google Ads mode – if lpurl is present, use it directly
     if (lpurl) {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
           lpurl,
           offer,
           club,
-          club_id,
+          location_id,
           utm,
           source: "google",
           timestamp: Date.now()
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     }
 
     // ✅ Facebook/default mode
-    const clubId = club || club_id;
+    const clubId = club || location_id;
     if (!landing_page || !clubId) {
       return res.status(400).json({
         ok: false,
