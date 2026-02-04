@@ -1,15 +1,15 @@
-// pages/bridge.js
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
 
 export default function BridgePage() {
+  const [destinationUrl, setDestinationUrl] = useState(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const locationId = params.get("location_id");
     const slug = (params.get("landing_page") || "").toLowerCase().trim();
 
-    if (!slug || !locationId) {
-      return;
-    }
+    if (!slug || !locationId) return;
 
     let url = "https://www.anytimefitness.com";
 
@@ -23,27 +23,47 @@ export default function BridgePage() {
       url = `https://www.anytimefitness.com/offer/local/${slug}?club=${locationId}`;
     }
 
-    setTimeout(() => {
-      window.location.href = url;
-    }, 1000);
+    setDestinationUrl(url);
   }, []);
 
+  const handleClick = () => {
+    if (destinationUrl) {
+      window.location.href = destinationUrl;
+    }
+  };
+
   return (
-    <div style={{
-      height: '100vh',
-      backgroundColor: '#440099',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      color: 'white',
-      fontFamily: 'Helvetica, sans-serif',
-      fontSize: '2.0rem',
-      textAlign: 'center',
-      padding: '0 20px'
-    }}>
-      <p>👟 💪Hang tight!  Real results ahead!</p>
-    </div>
+    <>
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
+
+      <div style={{
+        height: '100vh',
+        backgroundColor: '#440099',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'white',
+        fontFamily: 'Helvetica, sans-serif',
+        fontSize: '2rem',
+        textAlign: 'center',
+        padding: '0 20px'
+      }}>
+        <p>
+          👟Ready for REAL Results? 💪 {" "}
+          <span
+            onClick={handleClick}
+            style={{
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Click HERE to Claim your Offer
+          </span>
+        </p>
+      </div>
+    </>
   );
 }
-
-
