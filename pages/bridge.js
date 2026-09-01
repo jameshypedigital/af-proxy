@@ -1,62 +1,117 @@
-export default async function handler(req, res) {
+export default function BridgePage() {
+  return null;
+}
+
+export async function getServerSideProps(context) {
   try {
     const {
       lpurl,
-      offer,
-      club,
       landing_page,
       location_id,
-      ...utm
-    } = req.query;
+      offer,
+      club,
 
-    // ===================================================
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term,
+      utm_adgroup,
+      utm_adid,
+
+      gclid,
+
+      ...otherParams
+    } = context.query;
+
+    const cleanValue = (value) => {
+      if (Array.isArray(value)) {
+        return value[0] || null;
+      }
+
+      if (
+        value === undefined ||
+        value === null ||
+        value === ""
+      ) {
+        return null;
+      }
+
+      return String(value);
+    };
+
+    const finalLpurl = cleanValue(lpurl);
+    const finalLandingPage = cleanValue(landing_page);
+    const finalLocationId = cleanValue(location_id);
+    const finalOffer = cleanValue(offer);
+    const finalClub = cleanValue(club);
+
+    // =====================================================
     // GOOGLE MODE
-    //
-    // This also supports Google if you ever use
-    // /api/redirect instead of /bridge.
-    // ===================================================
-    if (lpurl) {
+    // =====================================================
 
+    if (finalLpurl) {
       try {
-        const destination = new URL(lpurl);
+        const destination = new URL(finalLpurl);
 
         if (
           destination.protocol !== "https:" &&
           destination.protocol !== "http:"
         ) {
-          return res.status(400).json({
-            ok: false,
-            error: "Invalid lpurl"
-          });
+          throw new Error("Invalid lpurl protocol");
         }
       } catch (err) {
-        return res.status(400).json({
-          ok: false,
-          error: "Invalid lpurl"
-        });
+        console.error("Invalid lpurl:", finalLpurl);
+
+        return {
+          notFound: true
+        };
       }
 
-      // Tracking should never prevent redirect
+      const trackingPayload = {
+        source: "google",
+
+        landing_page: finalLandingPage,
+        location_id: finalLocationId,
+
+        offer: finalOffer,
+        club: finalClub,
+
+        lpurl: finalLpurl,
+
+        utm_source: cleanValue(utm_source),
+        utm_medium: cleanValue(utm_medium),
+        utm_campaign: cleanValue(utm_campaign),
+        utm_content: cleanValue(utm_content),
+        utm_term: cleanValue(utm_term),
+        utm_adgroup: cleanValue(utm_adgroup),
+        utm_adid: cleanValue(utm_adid),
+
+        gclid: cleanValue(gclid),
+
+        other_params: otherParams,
+
+        timestamp: Date.now()
+      };
+
       try {
-        await fetch(
+        const response = await fetch(
           "https://dashtraq.app.n8n.cloud/webhook/redirect-track",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-              landing_page,
-              lpurl,
-              offer,
-              club,
-              location_id,
-              utm,
-              source: "google",
-              timestamp: Date.now()
-            })
+            body: JSON.stringify(trackingPayload)
           }
         );
+
+        if (!response.ok) {
+          console.error(
+            "n8n tracking returned status:",
+            response.status
+          );
+        }
       } catch (trackingError) {
         console.error(
           "Google tracking failed:",
@@ -64,30 +119,30 @@ export default async function handler(req, res) {
         );
       }
 
-      return res.redirect(302, lpurl);
+      return {
+        redirect: {
+          destination: finalLpurl,
+          permanent: false
+        }
+      };
     }
 
-    // ===================================================
-    // META / FACEBOOK / DEFAULT MODE
-    // ===================================================
+    // =====================================================
+    // META / DEFAULT MODE
+    // =====================================================
 
-    const clubId = club || location_id;
+    const clubId = finalClub || finalLocationId;
 
-    if (!landing_page || !clubId) {
-      return res.status(400).json({
-        ok: false,
-        error:
-          "Missing required params: landing_page or club"
-      });
+    if (!finalLandingPage || !clubId) {
+      return {
+        notFound: true
+      };
     }
 
-    const slug = landing_page
+    const slug = finalLandingPage
       .trim()
       .toLowerCase();
 
-    // ---------------------------------------------------
-    // SEND CLICK TO N8N
-    // ---------------------------------------------------
     try {
       await fetch(
         "https://dashtraq.app.n8n.cloud/webhook/redirect-track",
@@ -97,12 +152,12 @@ export default async function handler(req, res) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            offer,
+            offer: finalOffer,
             club: clubId,
             location_id: clubId,
             landing_page: slug,
             slug,
-            utm,
+            utm: otherParams,
             source: "facebook-or-other",
             timestamp: Date.now()
           })
@@ -115,52 +170,46 @@ export default async function handler(req, res) {
       );
     }
 
-    // ---------------------------------------------------
-    // BUILD META DESTINATION
-    // ---------------------------------------------------
+    let finalUrl;
 
-    let finalUrl = null;
-
-    // BLOG
     if (slug.startsWith("blog/")) {
 
       finalUrl =
         `https://www.anytimefitness.com/${slug}`;
 
-    // ONLINE SIGNUP
     } else if (slug === "online-signup") {
 
       finalUrl =
         `https://join.anytimefitness.com/${clubId}/plans`;
 
-    // NO OFFER
     } else if (slug === "no-offer") {
 
       finalUrl =
         `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
 
-    // CLUB HOME
     } else if (slug === "club-home") {
 
       finalUrl =
         `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
 
-    // LOCAL OFFER
     } else {
 
       finalUrl =
         `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
     }
 
-    return res.redirect(302, finalUrl);
+    return {
+      redirect: {
+        destination: finalUrl,
+        permanent: false
+      }
+    };
 
   } catch (err) {
+    console.error("Bridge fatal error:", err);
 
-    console.error("Redirect error:", err);
-
-    return res.status(500).json({
-      ok: false,
-      error: err.message
-    });
+    return {
+      notFound: true
+    };
   }
 }
