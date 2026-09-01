@@ -1,9 +1,4 @@
-export default function BridgePage() {
-  // This should never actually render because getServerSideProps redirects first.
-  return null;
-}
-
-export async function getServerSideProps(context) {
+export default async function handler(req, res) {
   try {
     const {
       lpurl,
@@ -12,44 +7,36 @@ export async function getServerSideProps(context) {
       landing_page,
       location_id,
       ...utm
-    } = context.query;
+    } = req.query;
 
-    const getValue = (value) => {
-      if (Array.isArray(value)) return value[0];
-      return value || null;
-    };
-
-    const finalLpurl = getValue(lpurl);
-    const finalOffer = getValue(offer);
-    const finalClub = getValue(club);
-    const finalLandingPage = getValue(landing_page);
-    const finalLocationId = getValue(location_id);
-
-    // =====================================================
-    // GOOGLE ADS MODE
-    // lpurl is the authoritative destination
-    // =====================================================
-
-    if (finalLpurl) {
-      let destinationUrl;
+    // ===================================================
+    // GOOGLE MODE
+    //
+    // This also supports Google if you ever use
+    // /api/redirect instead of /bridge.
+    // ===================================================
+    if (lpurl) {
 
       try {
-        destinationUrl = new URL(finalLpurl);
+        const destination = new URL(lpurl);
 
-        // Only allow normal web URLs
         if (
-          destinationUrl.protocol !== "https:" &&
-          destinationUrl.protocol !== "http:"
+          destination.protocol !== "https:" &&
+          destination.protocol !== "http:"
         ) {
-          throw new Error("Invalid lpurl protocol");
+          return res.status(400).json({
+            ok: false,
+            error: "Invalid lpurl"
+          });
         }
       } catch (err) {
-        return {
-          notFound: true
-        };
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid lpurl"
+        });
       }
 
-      // Track the click, but don't prevent the redirect if tracking fails
+      // Tracking should never prevent redirect
       try {
         await fetch(
           "https://dashtraq.app.n8n.cloud/webhook/redirect-track",
@@ -59,10 +46,11 @@ export async function getServerSideProps(context) {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              lpurl: finalLpurl,
-              offer: finalOffer,
-              club: finalClub,
-              location_id: finalLocationId,
+              landing_page,
+              lpurl,
+              offer,
+              club,
+              location_id,
               utm,
               source: "google",
               timestamp: Date.now()
@@ -71,36 +59,35 @@ export async function getServerSideProps(context) {
         );
       } catch (trackingError) {
         console.error(
-          "Google redirect tracking failed:",
+          "Google tracking failed:",
           trackingError
         );
       }
 
-      return {
-        redirect: {
-          destination: finalLpurl,
-          permanent: false
-        }
-      };
+      return res.redirect(302, lpurl);
     }
 
-    // =====================================================
-    // FACEBOOK / DEFAULT MODE
-    // =====================================================
+    // ===================================================
+    // META / FACEBOOK / DEFAULT MODE
+    // ===================================================
 
-    const clubId = finalClub || finalLocationId;
+    const clubId = club || location_id;
 
-    if (!finalLandingPage || !clubId) {
-      return {
-        notFound: true
-      };
+    if (!landing_page || !clubId) {
+      return res.status(400).json({
+        ok: false,
+        error:
+          "Missing required params: landing_page or club"
+      });
     }
 
-    const slug = finalLandingPage
+    const slug = landing_page
       .trim()
       .toLowerCase();
 
-    // Track the click, but don't prevent redirect if tracking fails
+    // ---------------------------------------------------
+    // SEND CLICK TO N8N
+    // ---------------------------------------------------
     try {
       await fetch(
         "https://dashtraq.app.n8n.cloud/webhook/redirect-track",
@@ -110,8 +97,10 @@ export async function getServerSideProps(context) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            offer: finalOffer,
+            offer,
             club: clubId,
+            location_id: clubId,
+            landing_page: slug,
             slug,
             utm,
             source: "facebook-or-other",
@@ -121,51 +110,57 @@ export async function getServerSideProps(context) {
       );
     } catch (trackingError) {
       console.error(
-        "Facebook/default redirect tracking failed:",
+        "Meta/default tracking failed:",
         trackingError
       );
     }
 
-    let finalUrl;
+    // ---------------------------------------------------
+    // BUILD META DESTINATION
+    // ---------------------------------------------------
 
-    // BLOG ARTICLES
+    let finalUrl = null;
+
+    // BLOG
     if (slug.startsWith("blog/")) {
+
       finalUrl =
         `https://www.anytimefitness.com/${slug}`;
 
     // ONLINE SIGNUP
     } else if (slug === "online-signup") {
+
       finalUrl =
         `https://join.anytimefitness.com/${clubId}/plans`;
 
     // NO OFFER
     } else if (slug === "no-offer") {
+
       finalUrl =
         `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
 
     // CLUB HOME
     } else if (slug === "club-home") {
+
       finalUrl =
         `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
 
-    // DEFAULT LOCAL OFFER
+    // LOCAL OFFER
     } else {
+
       finalUrl =
         `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
     }
 
-    return {
-      redirect: {
-        destination: finalUrl,
-        permanent: false
-      }
-    };
+    return res.redirect(302, finalUrl);
 
   } catch (err) {
-    console.error("Bridge error:", err);
 
-    return {
-      notFound: true
-    };
+    console.error("Redirect error:", err);
+
+    return res.status(500).json({
+      ok: false,
+      error: err.message
+    });
   }
 }
