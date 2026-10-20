@@ -59,7 +59,7 @@ if (slug.startsWith("blog/")) {
   finalUrl = `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
 
 } else if (slug === "club-home") {
-  finalUrl = `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
+  finalUrl = `https://www.anytimefitness.com/locations/${clubId}`;
 
 // 🎯 DEFAULT LOCAL OFFER — LAST
 } else {
