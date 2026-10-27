@@ -1,10 +1,12 @@
+
 export default async function handler(req, res) {
   try {
     const { lpurl, offer, club, landing_page, location_id, ...utm } = req.query;
 
-    // ✅ Google Ads mode – if lpurl is present, use it directly
+    // ✅ GOOGLE ADS MODE
+    // Send Google tracking to the separate Google n8n workflow.
     if (lpurl) {
-      await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-track", {
+      await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -21,8 +23,10 @@ export default async function handler(req, res) {
       return res.redirect(302, lpurl);
     }
 
-    // ✅ Facebook/default mode
+    // ✅ FACEBOOK / META MODE
+    // Keep the existing Meta webhook and redirect behavior.
     const clubId = club || location_id;
+
     if (!landing_page || !clubId) {
       return res.status(400).json({
         ok: false,
@@ -47,30 +51,31 @@ export default async function handler(req, res) {
 
     let finalUrl = null;
 
-// 📰 BLOG ARTICLES — MUST COME FIRST
-if (slug.startsWith("blog/")) {
-  finalUrl = `https://www.anytimefitness.com/${slug}`;
+    // 📰 BLOG ARTICLES — MUST COME FIRST
+    if (slug.startsWith("blog/")) {
+      finalUrl = `https://www.anytimefitness.com/${slug}`;
 
-// 🧠 General club pages
-} else if (slug === "online-signup") {
-  finalUrl = `https://join.anytimefitness.com/${clubId}/plans`;
+    // 🧠 General club pages
+    } else if (slug === "online-signup") {
+      finalUrl = `https://join.anytimefitness.com/${clubId}/plans`;
 
-} else if (slug === "no-offer") {
-  finalUrl = `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
+    } else if (slug === "no-offer") {
+      finalUrl = `https://www.anytimefitness.com/membership-inquiry?location_id=${clubId}`;
 
-} else if (slug === "club-home") {
-  finalUrl = `https://www.anytimefitness.com/locations/${clubId}`;
+    } else if (slug === "club-home") {
+      finalUrl = `https://www.anytimefitness.com/locations/${clubId}`;
 
-// 🎯 DEFAULT LOCAL OFFER — LAST
-} else {
-  finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
-}
-
+    // 🎯 DEFAULT LOCAL OFFER — LAST
+    } else {
+      finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
+    }
 
     return res.redirect(302, finalUrl);
 
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({
+      ok: false,
+      error: err.message
+    });
   }
 }
-
