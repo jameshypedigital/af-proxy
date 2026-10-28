@@ -5,23 +5,39 @@ export default async function handler(req, res) {
 
     // ✅ GOOGLE ADS MODE
     // Send Google tracking to the separate Google n8n workflow.
-    if (lpurl) {
-      await fetch("https://dashtraq.app.n8n.cloud/webhook/redirect-google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lpurl,
-          offer,
-          club,
-          location_id,
-          utm,
-          source: "google",
-          timestamp: Date.now()
-        })
-      });
+    
+if (lpurl) {
+  console.log("GOOGLE MODE TRIGGERED", {
+    location_id,
+    lpurl,
+    utm_campaign: utm.utm_campaign
+  });
 
-      return res.redirect(302, lpurl);
+  const webhookResponse = await fetch(
+    "https://dashtraq.app.n8n.cloud/webhook/redirect-google",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lpurl,
+        offer,
+        club,
+        location_id,
+        utm,
+        source: "google",
+        timestamp: Date.now()
+      })
     }
+  );
+
+  const responseText = await webhookResponse.text();
+
+  console.log("GOOGLE WEBHOOK STATUS:", webhookResponse.status);
+  console.log("GOOGLE WEBHOOK RESPONSE:", responseText);
+
+  return res.redirect(302, lpurl);
+}
+
 
     // ✅ FACEBOOK / META MODE
     // Keep the existing Meta webhook and redirect behavior.
