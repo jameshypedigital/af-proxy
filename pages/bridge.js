@@ -98,7 +98,7 @@ export async function getServerSideProps(context) {
 
       try {
         const response = await fetch(
-          "https://dashtraq.app.n8n.cloud/webhook/redirect-track",
+          "https://dashtraq.app.n8n.cloud/webhook/redirect-google",
           {
             method: "POST",
             headers: {
