@@ -81,6 +81,9 @@ if (lpurl) {
     } else if (slug === "club-home") {
       finalUrl = `https://www.anytimefitness.com/locations/${clubId}`;
 
+      } else if (slug === "founders-rate") {
+      finalUrl = `https://www.anytimefitness.com/offer/local/founders-rate/?club=${clubId}`;
+
     // 🎯 DEFAULT LOCAL OFFER — LAST
     } else {
       finalUrl = `https://www.anytimefitness.com/offer/local/${slug}?club=${clubId}`;
