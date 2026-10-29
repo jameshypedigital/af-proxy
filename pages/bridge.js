@@ -163,6 +163,10 @@ export async function getServerSideProps(context) {
     } else if (slug === "club-home") {
       finalUrl =
         `https://www.anytimefitness.com/locations/commerce-texas-${clubId}`;
+      
+    } else if (slug === "founders-rate") {
+      finalUrl =
+        `https://www.anytimefitness.com/offer/local/founders-rate/?club=${clubId}`;
 
     } else {
       finalUrl =
