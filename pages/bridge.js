@@ -70,31 +70,32 @@ export async function getServerSideProps(context) {
         };
       }
 
-      const trackingPayload = {
-        source: "google",
+      
+const trackingPayload = {
+  source: "google",
 
-        landing_page: finalLandingPage,
-        location_id: finalLocationId,
+  landing_page: finalLandingPage,
+  location_id: finalLocationId,
+  club: finalClub || finalLocationId,
 
-        offer: finalOffer,
-        club: finalClub,
+  offer: finalOffer,
+  lpurl: finalLpurl,
 
-        lpurl: finalLpurl,
+  utm: {
+    utm_source: cleanValue(utm_source) || "google",
+    utm_medium: cleanValue(utm_medium) || "cpc",
+    utm_campaign: cleanValue(utm_campaign),
+    utm_content: cleanValue(utm_content),
+    utm_term: cleanValue(utm_term),
+    utm_adgroup: cleanValue(utm_adgroup),
+    utm_adid: cleanValue(utm_adid),
+    gclid: cleanValue(gclid)
+  },
 
-        utm_source: cleanValue(utm_source),
-        utm_medium: cleanValue(utm_medium),
-        utm_campaign: cleanValue(utm_campaign),
-        utm_content: cleanValue(utm_content),
-        utm_term: cleanValue(utm_term),
-        utm_adgroup: cleanValue(utm_adgroup),
-        utm_adid: cleanValue(utm_adid),
+  other_params: otherParams,
+  timestamp: Date.now()
+};
 
-        gclid: cleanValue(gclid),
-
-        other_params: otherParams,
-
-        timestamp: Date.now()
-      };
 
       try {
         const response = await fetch(
